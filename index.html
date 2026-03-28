@@ -387,70 +387,10 @@
 </div>
 
 <script>
-// ─────────────────────────────────────────────
-//  CONFIG — update these after setting up R2
-// ─────────────────────────────────────────────
 const R2_BASE = 'https://pub-9fe1a154acb94e2d8d40117232b563ec.r2.dev';
 
-const CURRENT = {
-  name:   'Azurite &amp; Malachite',
-  date:   'April 2026',
-  slug:   'azurite-malachite',
-  plyUrl: `${R2_BASE}/rocks/azurite-malachite/splat.ply`,
-  supersplatId: null, // set once uploaded to SuperSplat, e.g. 'abc123'
-  photos: [], // auto-detected via HEAD requests on init
-};
-
-const ARCHIVE = [
-  {
-    name: 'Quartz, Pyrite &amp; Ammonite',
-    date: 'March 2026',
-    slug: 'quartz-pyrite-ammonite-mar26',
-    supersplatId: null,
-  },
-  {
-    name: 'Galena, Quartz &amp; Calcite',
-    date: 'February 2026',
-    slug: 'galena-quartz-calcite-feb26',
-    supersplatId: '2797daae',
-  },
-  {
-    name: 'Druzy Quartz &amp; Calcite Stalactites',
-    date: 'January 2026',
-    slug: 'druzy-quartz-stalactites-jan26',
-    supersplatId: null,
-  },
-  {
-    name: 'Grape Amethyst',
-    date: 'December 2025',
-    slug: 'grape-amethyst-dec25',
-    supersplatId: null,
-  },
-  {
-    name: 'Druzy Quartz &amp; Plasma Agate',
-    date: 'November 2025',
-    slug: 'druzy-quartz-plasma-agate-nov25',
-    supersplatId: null,
-  },
-  {
-    name: 'Epidote',
-    date: 'October 2025',
-    slug: 'epidote-oct25',
-    supersplatId: null,
-  },
-  {
-    name: 'Manufactured Silicon',
-    date: 'September 2025',
-    slug: 'manufactured-silicon-sep25',
-    supersplatId: null,
-  },
-  {
-    name: 'Vanadinite',
-    date: 'August 2025',
-    slug: 'vanadinite-aug25',
-    supersplatId: 'a08eb0eb',
-  },
-];
+let CURRENT = null;
+let ARCHIVE  = [];
 
 // ─────────────────────────────────────────────
 //  Viewer toggle
@@ -646,9 +586,19 @@ async function detectPhotos(slug) {
 }
 
 async function init() {
-  if (CURRENT.plyUrl && !CURRENT.plyUrl.startsWith('YOUR_')) {
-    document.getElementById('splat-download').href = CURRENT.plyUrl;
-  }
+  // Load catalog from R2 — no deploy needed to add new months
+  const catalog = await fetch(`${R2_BASE}/rocks/manifest.json`).then(r => r.json());
+  CURRENT = catalog.current;
+  ARCHIVE  = catalog.archive;
+  CURRENT.photos = [];
+  if (CURRENT.plyUrl) CURRENT.plyUrl = `${R2_BASE}/${CURRENT.plyUrl}`;
+
+  // Update page header
+  document.getElementById('current-name').innerHTML = CURRENT.name;
+  document.getElementById('current-date').textContent = CURRENT.date;
+
+  if (CURRENT.plyUrl) document.getElementById('splat-download').href = CURRENT.plyUrl;
+
   switchViewer('self');
   CURRENT.photos = await detectPhotos(CURRENT.slug);
   buildGallery();
