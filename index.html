@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Rock of the Month — weustis.com</title>
+  <title>weustis</title>
   <style>
     /* ── Reset & base ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -34,27 +34,6 @@
     /* ── Layout ── */
     .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
 
-    /* ── Header ── */
-    header {
-      border-bottom: 1px solid var(--border);
-      padding: 20px 0;
-    }
-    header .container {
-      display: flex;
-      align-items: baseline;
-      gap: 16px;
-    }
-    .site-title {
-      font-size: 14px;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-    .site-subtitle {
-      font-size: 13px;
-      color: var(--muted);
-    }
 
     /* ── Current ROTM ── */
     .rotm-hero {
@@ -111,29 +90,6 @@
     .viewer-placeholder svg {
       opacity: 0.3;
     }
-    .viewer-actions {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 40px;
-      flex-wrap: wrap;
-    }
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 7px 14px;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 500;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--text);
-      cursor: pointer;
-      text-decoration: none;
-      transition: border-color 0.15s, background 0.15s;
-    }
-    .btn:hover { border-color: var(--accent); color: var(--accent); text-decoration: none; }
-    .btn.active { border-color: var(--accent); color: var(--accent); }
 
     /* ── Photo gallery ── */
     .section-label {
@@ -319,13 +275,6 @@
 </head>
 <body>
 
-<header>
-  <div class="container">
-    <span class="site-title">weustis.com</span>
-    <span class="site-subtitle">rock of the month</span>
-  </div>
-</header>
-
 <main>
   <div class="container">
 
@@ -335,23 +284,8 @@
       <h1 class="rotm-name" id="current-name">Azurite &amp; Malachite</h1>
       <p class="rotm-date" id="current-date">April 2026</p>
 
-      <!-- 3D Viewer -->
-      <div class="viewer-wrap" id="viewer-wrap">
-        <div class="viewer-placeholder" id="viewer-placeholder">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-            <path d="M2 17l10 5 10-5"/>
-            <path d="M2 12l10 5 10-5"/>
-          </svg>
-          <span>3D viewer — configure R2 URL to enable</span>
-        </div>
-      </div>
-
-      <div class="viewer-actions" id="viewer-actions">
-        <button class="btn active" id="btn-selfhost" onclick="switchViewer('self')">Self-hosted</button>
-        <button class="btn" id="btn-supersplat" onclick="switchViewer('supersplat')">SuperSplat</button>
-        <a class="btn" id="splat-download" href="#" download>↓ Download .ply</a>
-      </div>
+      <!-- 3D Viewer (hidden if no splat) -->
+      <div class="viewer-wrap" id="viewer-wrap" style="display:none"></div>
 
       <!-- Photo gallery -->
       <p class="section-label">Focus Stacks</p>
@@ -395,43 +329,23 @@ let ARCHIVE  = [];
 // ─────────────────────────────────────────────
 //  Viewer toggle
 // ─────────────────────────────────────────────
-let currentViewer = null;
-
-function switchViewer(mode) {
+function mountViewer() {
   const wrap = document.getElementById('viewer-wrap');
-  document.getElementById('btn-selfhost').classList.toggle('active', mode === 'self');
-  document.getElementById('btn-supersplat').classList.toggle('active', mode === 'supersplat');
-  currentViewer = mode;
-
-  // Remove existing iframe/placeholder
-  const existing = wrap.querySelector('iframe, .viewer-placeholder');
-  if (existing) existing.remove();
-
-  const iframe = document.createElement('iframe');
-  iframe.setAttribute('allowfullscreen', '');
-
-  if (mode === 'self') {
-    if (!CURRENT.plyUrl || CURRENT.plyUrl.startsWith('YOUR_')) {
-      showPlaceholder(wrap, '3D viewer — configure R2_BASE URL to enable');
-      return;
-    }
+  if (CURRENT.plyUrl) {
+    wrap.style.display = '';
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('allowfullscreen', '');
     iframe.src = `/viewer/?url=${encodeURIComponent(CURRENT.plyUrl)}`;
-  } else {
-    if (!CURRENT.supersplatId) {
-      showPlaceholder(wrap, 'No SuperSplat ID configured for this rock');
-      return;
-    }
-    iframe.src = `https://superspl.at/s?id=${CURRENT.supersplatId}`;
+    wrap.appendChild(iframe);
+  } else if (CURRENT.supersplatId) {
+    wrap.style.display = '';
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('allowfullscreen', '');
     iframe.setAttribute('allow', 'fullscreen; xr-spatial-tracking');
+    iframe.src = `https://superspl.at/s?id=${CURRENT.supersplatId}`;
+    wrap.appendChild(iframe);
   }
-  wrap.appendChild(iframe);
-}
-
-function showPlaceholder(wrap, msg) {
-  const ph = document.createElement('div');
-  ph.className = 'viewer-placeholder';
-  ph.innerHTML = `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg><span>${msg}</span>`;
-  wrap.appendChild(ph);
+  // else: no splat — wrap stays hidden, just photos show
 }
 
 // ─────────────────────────────────────────────
@@ -600,9 +514,7 @@ async function init() {
   document.getElementById('current-name').innerHTML = CURRENT.name;
   document.getElementById('current-date').textContent = CURRENT.date;
 
-  if (CURRENT.plyUrl) document.getElementById('splat-download').href = CURRENT.plyUrl;
-
-  switchViewer('self');
+  mountViewer();
   CURRENT.photos = await detectPhotos(CURRENT.slug);
   buildGallery();
   buildArchive();
