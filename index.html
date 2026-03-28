@@ -403,13 +403,52 @@ const CURRENT = {
 
 const ARCHIVE = [
   {
-    name:  'Galena &amp; Quartz',
-    date:  'March 2026',
-    slug:  'galena-quartz',
-    plyUrl: null,
+    name: 'Quartz, Pyrite &amp; Ammonite',
+    date: 'March 2026',
+    slug: 'quartz-pyrite-ammonite-mar26',
+    supersplatId: null,
+  },
+  {
+    name: 'Galena, Quartz &amp; Calcite',
+    date: 'February 2026',
+    slug: 'galena-quartz-calcite-feb26',
     supersplatId: '2797daae',
-    thumb: null, // set to R2 URL if you upload a cover photo
-    photos: [],
+  },
+  {
+    name: 'Druzy Quartz &amp; Calcite Stalactites',
+    date: 'January 2026',
+    slug: 'druzy-quartz-stalactites-jan26',
+    supersplatId: null,
+  },
+  {
+    name: 'Grape Amethyst',
+    date: 'December 2025',
+    slug: 'grape-amethyst-dec25',
+    supersplatId: null,
+  },
+  {
+    name: 'Druzy Quartz &amp; Plasma Agate',
+    date: 'November 2025',
+    slug: 'druzy-quartz-plasma-agate-nov25',
+    supersplatId: null,
+  },
+  {
+    name: 'Epidote',
+    date: 'October 2025',
+    slug: 'epidote-oct25',
+    supersplatId: null,
+  },
+  {
+    name: 'Manufactured Silicon',
+    date: 'September 2025',
+    slug: 'manufactured-silicon-sep25',
+    supersplatId: null,
+  },
+  {
+    name: 'Vanadinite',
+    date: 'August 2025',
+    slug: 'vanadinite-aug25',
+    supersplatId: 'a08eb0eb',
   },
 ];
 
@@ -561,11 +600,6 @@ document.getElementById('lightbox').addEventListener('click', function(e) {
 function buildArchive() {
   const grid = document.getElementById('archive-grid');
   ARCHIVE.forEach(rock => {
-    const hasThumb = rock.thumb && !rock.thumb.startsWith('YOUR_');
-    const thumbHtml = hasThumb
-      ? `<img data-src="${rock.thumb}" alt="${rock.name}" onload="this.classList.add('loaded')">`
-      : `<div class="no-photo">◈</div>`;
-
     const links = [];
     if (rock.supersplatId) links.push(`<a href="https://superspl.at/s?id=${rock.supersplatId}" target="_blank" rel="noopener">3D (SuperSplat)</a>`);
     if (rock.plyUrl && !rock.plyUrl.startsWith('YOUR_')) links.push(`<a href="${rock.plyUrl}" download>↓ .ply</a>`);
@@ -578,18 +612,27 @@ function buildArchive() {
     card.className = 'archive-card';
     if (primaryLink) { card.href = primaryLink; card.target = '_blank'; card.rel = 'noopener'; }
     card.innerHTML = `
-      <div class="archive-thumb">${thumbHtml}</div>
+      <div class="archive-thumb"><div class="no-photo">◈</div></div>
       <div class="archive-info">
         <p class="month">${rock.date}</p>
         <p class="name">${rock.name}</p>
         <div class="archive-links">${links.join('')}</div>
       </div>`;
     grid.appendChild(card);
-  });
 
-  // Lazy load archive thumbs
-  grid.querySelectorAll('img[data-src]').forEach(img => {
-    img.src = img.dataset.src;
+    // Load cover photo from manifest asynchronously
+    const thumbWrap = card.querySelector('.archive-thumb');
+    fetch(`${R2_BASE}/rocks/${rock.slug}/photos/manifest.json`)
+      .then(r => r.json())
+      .then(data => {
+        if (!data.photos || !data.photos.length) return;
+        const url = `${R2_BASE}/rocks/${rock.slug}/photos/${data.photos[0]}-thumb.jpg`;
+        const img = document.createElement('img');
+        img.alt = rock.name;
+        img.onload = () => { img.classList.add('loaded'); thumbWrap.innerHTML = ''; thumbWrap.appendChild(img); };
+        img.src = url;
+      })
+      .catch(() => {}); // no manifest yet — keep placeholder
   });
 }
 
