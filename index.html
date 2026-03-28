@@ -589,13 +589,9 @@ function buildArchive() {
 //  Init
 // ─────────────────────────────────────────────
 async function detectPhotos(slug) {
-  const base = `${R2_BASE}/rocks/${slug}/photos`;
-  const nums = Array.from({length: 30}, (_, i) => String(i + 1).padStart(2, '0'));
-  const results = await Promise.all(
-    nums.map(n => fetch(`${base}/${n}-thumb.jpg`, { method: 'HEAD' })
-      .then(r => r.ok ? n : null).catch(() => null))
-  );
-  return results.filter(Boolean);
+  const r = await fetch(`${R2_BASE}/rocks/${slug}/photos/manifest.json`);
+  const data = await r.json();
+  return data.photos;
 }
 
 async function init() {
