@@ -580,9 +580,12 @@ function buildArchive() {
 //  Init
 // ─────────────────────────────────────────────
 async function detectPhotos(slug) {
-  const r = await fetch(`${R2_BASE}/rocks/${slug}/photos/manifest.json`);
-  const data = await r.json();
-  return data.photos;
+  try {
+    const r = await fetch(`${R2_BASE}/rocks/${slug}/photos/manifest.json`);
+    if (!r.ok) return [];
+    const data = await r.json();
+    return data.photos || [];
+  } catch { return []; }
 }
 
 async function init() {
